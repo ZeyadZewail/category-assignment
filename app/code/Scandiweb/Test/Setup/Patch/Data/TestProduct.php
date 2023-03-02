@@ -22,7 +22,8 @@ use Magento\InventoryApi\Api\SourceItemsSaveInterface;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
 
 /**
- * [Description TestProduct]
+ * Class TestProduct
+ * @package Scandiweb\Test\Setup\Patch\Data
  */
 class TestProduct implements DataPatchInterface
 {
@@ -76,6 +77,18 @@ class TestProduct implements DataPatchInterface
      */
     protected array $sourceItems = [];
 
+    /**
+     * @param ModuleDataSetupInterface $setup
+     * @param ProductInterfaceFactory $productInterfaceFactory
+     * @param ProductRepositoryInterface $productRepository
+     * @param State $appState
+     * @param StoreManagerInterface $storeManager
+     * @param EavSetup $eavSetup
+     * @param SourceItemInterfaceFactory $sourceItemFactory
+     * @param SourceItemsSaveInterface $sourceItemsSaveInterface
+     * @param CategoryLinkManagementInterface $categoryLink
+     * @param CategoryCollectionFactory $categoryCollectionFactory
+     */
     public function __construct(
         ModuleDataSetupInterface $setup,
         ProductInterfaceFactory $productInterfaceFactory,
@@ -103,7 +116,7 @@ class TestProduct implements DataPatchInterface
     /**
      * @return array
      */
-    public static function getDependencies()
+    public static function getDependencies(): array
     {
         return array();
     }
@@ -111,7 +124,7 @@ class TestProduct implements DataPatchInterface
     /**
      * @return array
      */
-    public function getAliases()
+    public function getAliases(): array
     {
         return array();
     }
@@ -119,7 +132,7 @@ class TestProduct implements DataPatchInterface
     /**
      * @return void
      */
-    public function apply()
+    public function apply(): void
     {
         $this->appState->emulateAreaCode('adminhtml', [$this, 'execute']);
     }
@@ -127,7 +140,7 @@ class TestProduct implements DataPatchInterface
     /**
      * @return void
      */
-    public function execute()
+    public function execute(): void
     {
         // create the product
         $product = $this->productInterfaceFactory->create();
@@ -150,10 +163,22 @@ class TestProduct implements DataPatchInterface
             ->setVisibility(Visibility::VISIBILITY_BOTH)
             ->setStatus(Status::STATUS_ENABLED);
 
+        // create a source item
+        $sourceItem = $this->sourceItemFactory->create();
+        $sourceItem->setSourceCode('default');
+        // set the quantity of items in stock
+        $sourceItem->setQuantity(100);
+        // add the product's SKU that will be linked to this source item
+        $sourceItem->setSku($product->getSku());
+        // set the stock status
+        $sourceItem->setStatus(SourceItemInterface::STATUS_IN_STOCK);
+        $this->sourceItems[] = $sourceItem;
+
+        // save the source item
+        $this->sourceItemsSaveInterface->execute($this->sourceItems);
+        
         // save the product to the repository
         $product = $this->productRepository->save($product);
-        $product->setQuantity(100);
-
 
         $categoryTitles = ['Men', 'Women'];
         $categoryIds = $this->categoryCollectionFactory->create()

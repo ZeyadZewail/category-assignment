@@ -4,4 +4,3 @@
 	xsi:noNamespaceSchemaLocation="urn:magento:framework:Module/etc/module.xsd">
     <module name="Scandiweb_Test"/>
 </config>
-
