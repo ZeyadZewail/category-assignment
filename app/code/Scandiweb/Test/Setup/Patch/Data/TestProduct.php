@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Scandiweb\Test\Setup\Patch\Data;
 
 use Magento\Catalog\Api\CategoryLinkManagementInterface;
@@ -18,79 +21,123 @@ use Magento\InventoryApi\Api\Data\SourceItemInterfaceFactory;
 use Magento\InventoryApi\Api\SourceItemsSaveInterface;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
 
+/**
+ * [Description TestProduct]
+ */
 class TestProduct implements DataPatchInterface
 {
-  protected ModuleDataSetupInterface $setup;
+    /**
+     * @var ModuleDataSetupInterface
+     */
+    protected ModuleDataSetupInterface $setup;
 
-  protected ProductInterfaceFactory $productInterfaceFactory;
+    /**
+     * @var ProductInterfaceFactory
+     */
+    protected ProductInterfaceFactory $productInterfaceFactory;
 
-  protected ProductRepositoryInterface $productRepository;
+    /**
+     * @var ProductRepositoryInterface
+     */
+    protected ProductRepositoryInterface $productRepository;
 
-  protected State $appState;
+    /**
+     * @var State
+     */
+    protected State $appState;
 
-  protected EavSetup $eavSetup;
+    /**
+     * @var EavSetup
+     */
+    protected EavSetup $eavSetup;
 
-  protected StoreManagerInterface $storeManager;
+    /**
+     * @var StoreManagerInterface
+     */
+    protected StoreManagerInterface $storeManager;
 
-  protected SourceItemInterfaceFactory $sourceItemFactory;
+    /**
+     * @var SourceItemInterfaceFactory
+     */
+    protected SourceItemInterfaceFactory $sourceItemFactory;
 
-  protected SourceItemsSaveInterface $sourceItemsSaveInterface;
+    /**
+     * @var SourceItemsSaveInterface
+     */
+    protected SourceItemsSaveInterface $sourceItemsSaveInterface;
 
-  protected CategoryLinkManagementInterface $categoryLink;
+    /**
+     * @var CategoryLinkManagementInterface
+     */
+    protected CategoryLinkManagementInterface $categoryLink;
 
-  protected array $sourceItems = [];
+    /**
+     * @var array
+     */
+    protected array $sourceItems = [];
 
-  public function __construct(
-      ModuleDataSetupInterface $setup,
-      ProductInterfaceFactory $productInterfaceFactory,
-      ProductRepositoryInterface $productRepository,
-      State $appState,
-      StoreManagerInterface $storeManager,
-      EavSetup $eavSetup,
-      SourceItemInterfaceFactory $sourceItemFactory,
-      SourceItemsSaveInterface $sourceItemsSaveInterface,
-      CategoryLinkManagementInterface $categoryLink,
-      CategoryCollectionFactory $categoryCollectionFactory
-  ) {
-      $this->appState = $appState;
-      $this->productInterfaceFactory = $productInterfaceFactory;
-      $this->productRepository = $productRepository;
-      $this->setup = $setup;
-      $this->eavSetup = $eavSetup;
-      $this->storeManager = $storeManager;
-      $this->sourceItemFactory = $sourceItemFactory;
-      $this->sourceItemsSaveInterface = $sourceItemsSaveInterface;
-      $this->categoryLink = $categoryLink;
-      $this->categoryCollectionFactory = $categoryCollectionFactory;
-  }
+    public function __construct(
+        ModuleDataSetupInterface $setup,
+        ProductInterfaceFactory $productInterfaceFactory,
+        ProductRepositoryInterface $productRepository,
+        State $appState,
+        StoreManagerInterface $storeManager,
+        EavSetup $eavSetup,
+        SourceItemInterfaceFactory $sourceItemFactory,
+        SourceItemsSaveInterface $sourceItemsSaveInterface,
+        CategoryLinkManagementInterface $categoryLink,
+        CategoryCollectionFactory $categoryCollectionFactory
+    ) {
+        $this->appState = $appState;
+        $this->productInterfaceFactory = $productInterfaceFactory;
+        $this->productRepository = $productRepository;
+        $this->setup = $setup;
+        $this->eavSetup = $eavSetup;
+        $this->storeManager = $storeManager;
+        $this->sourceItemFactory = $sourceItemFactory;
+        $this->sourceItemsSaveInterface = $sourceItemsSaveInterface;
+        $this->categoryLink = $categoryLink;
+        $this->categoryCollectionFactory = $categoryCollectionFactory;
+    }
 
+    /**
+     * @return array
+     */
     public static function getDependencies()
     {
         return array();
     }
 
+    /**
+     * @return array
+     */
     public function getAliases()
     {
         return array();
     }
 
+    /**
+     * @return void
+     */
     public function apply()
     {
-      $this->appState->emulateAreaCode('adminhtml', [$this, 'execute']);
+        $this->appState->emulateAreaCode('adminhtml', [$this, 'execute']);
     }
 
+    /**
+     * @return void
+     */
     public function execute()
     {
-				// create the product
+        // create the product
         $product = $this->productInterfaceFactory->create();
 
-				// check if the product already exists
+        // check if the product already exists
         if ($product->getIdBySku('grip-trainer')) {
             return;
         }
 
-				// set default attributes...
-
+        // set default attributes...
         $attributeSetId = $this->eavSetup->getAttributeSetId(Product::ENTITY, 'Default');
 
         // set attributes
@@ -103,14 +150,18 @@ class TestProduct implements DataPatchInterface
             ->setVisibility(Visibility::VISIBILITY_BOTH)
             ->setStatus(Status::STATUS_ENABLED);
 
-            // save the product to the repository
-            $product = $this->productRepository->save($product);
+        // save the product to the repository
+        $product = $this->productRepository->save($product);
+        $product->setQuantity(100);
 
-            $categoryTitles = ['Men', 'Women'];
-            $categoryIds = $this->categoryCollectionFactory->create()
-                ->addAttributeToFilter('name', ['in' => $categoryTitles])
-                ->getAllIds();
 
-            $this->categoryLink->assignProductToCategories($product->getSku(), $categoryIds);
+        $categoryTitles = ['Men', 'Women'];
+        $categoryIds = $this->categoryCollectionFactory->create()
+            ->addAttributeToFilter('name', ['in' => $categoryTitles])
+            ->getAllIds();
+
+        $this->categoryLink->assignProductToCategories($product->getSku(), $categoryIds);
     }
 }
+
+
